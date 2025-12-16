@@ -10,7 +10,7 @@ Provide a secure and scalable API to manage posts/projects with an approval work
 - PHP 8.2
 - JWT Authentication
 - PostgreSQL
-- Docker & Docker Compose
+- Docker & Docker Compose 
 
 ## ✨ Core Features (planned)
 - Authentication & Authorization (JWT, Roles)
