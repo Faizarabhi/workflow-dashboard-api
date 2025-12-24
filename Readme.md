@@ -6,7 +6,7 @@ Backend API built with Symfony for managing business workflows.
 Provide a secure and scalable API to manage posts/projects with an approval workflow and role-based access.
 
 ## 🛠 Tech Stack
-- Symfony 6.4
+- Symfony 7.3
 - PHP 8.2
 - JWT Authentication
 - PostgreSQL
