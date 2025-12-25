@@ -20,3 +20,8 @@
 /config/jwt/*.pem
 /var/
 /vendor/
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
