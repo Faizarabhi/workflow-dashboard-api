@@ -10,7 +10,6 @@ class LoginTest extends WebTestCase
     {
         $client = static::createClient();
 
-        // 1) create a user via register endpoint (simple & black-box)
         $email = 'login_'.uniqid().'@example.com';
         $client->request(
             'POST',
