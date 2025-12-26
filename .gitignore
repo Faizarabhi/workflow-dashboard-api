@@ -34,3 +34,6 @@
 .env.local
 .env.*.local
 
+.env.dev
+.env.local
+.env.*.local
