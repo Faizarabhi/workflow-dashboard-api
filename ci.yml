@@ -18,15 +18,19 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U app"
+          --health-cmd="pg_isready -U app -d app_test"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
 
     env:
       APP_ENV: test
       DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
-      JWT_PASSPHRASE: ${{ secrets.JWT_PASSPHRASE }}
+
+      # JWT for CI (stable + reproducible)
+      JWT_PASSPHRASE: test_passphrase
+      JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
+      JWT_PUBLIC_KEY: "%kernel.project_dir%/config/jwt/public.pem"
 
     steps:
       - uses: actions/checkout@v4
@@ -47,12 +51,23 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Create JWT keys from secrets
+      - name: Generate JWT keys (CI)
         run: |
           mkdir -p config/jwt
-          echo "${{ secrets.JWT_PRIVATE_KEY }}" > config/jwt/private.pem
-          echo "${{ secrets.JWT_PUBLIC_KEY }}" > config/jwt/public.pem
-          chmod 600 config/jwt/private.pem
+          php bin/console lexik:jwt:generate-keypair --overwrite
+        env:
+          JWT_PASSPHRASE: test_passphrase
+
+      - name: Diagnostics (routes, keys, env)
+        run: |
+          php -v
+          php bin/console about
+          echo "=== Routes (login/register) ==="
+          php bin/console debug:router | grep -E 'api_login_check|api_register' || true
+          echo "=== JWT keys ==="
+          ls -la config/jwt || true
+          echo "=== DB URL ==="
+          echo "$DATABASE_URL"
 
       - name: Validate container
         run: php bin/console lint:container
@@ -60,7 +75,23 @@ jobs:
       - name: Create database & run migrations
         run: |
           php bin/console doctrine:database:create --if-not-exists --env=test
-          php bin/console doctrine:migrations:migrate --no-interaction --env=test
+          php bin/console doctrine:migrations:migrate -n --env=test
 
-      - name: Run tests
-        run: php bin/phpunit
+      - name: Run tests (verbose)
+        run: php bin/phpunit -vvv --testdox
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          echo "==== var/log/test.log ===="
+          test -f var/log/test.log && tail -n 300 var/log/test.log || echo "no test.log"
+          echo "==== var/log/dev.log ===="
+          test -f var/log/dev.log && tail -n 300 var/log/dev.log || echo "no dev.log"
+
+      - name: Upload logs artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: symfony-logs
+          path: |
+            var/log/*

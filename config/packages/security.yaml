@@ -29,6 +29,13 @@ security:
       jwt: ~
 
   access_control:
-    - { path: ^/api/register, roles: PUBLIC_ACCESS }
-    - { path: ^/api/login, roles: PUBLIC_ACCESS }
-    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+  - { path: ^/api/register, roles: PUBLIC_ACCESS }
+  - { path: ^/api/login, roles: PUBLIC_ACCESS }
+
+  # ✅ OAuth لازم يكون public قبل rule العام ديال /api
+  - { path: ^/api/oauth/google$, roles: PUBLIC_ACCESS }
+  - { path: ^/api/oauth/google/callback, roles: PUBLIC_ACCESS }
+
+  # ✅ باقي API محمي
+  - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+

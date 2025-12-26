@@ -19,9 +19,23 @@ class RegisterController extends AbstractController
         UserPasswordHasherInterface $passwordHasher
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
+        //dd($data);
+        if (
+            empty($data['email']) ||
+            empty($data['password'])
+        ) {
+            return $this->json([
+                'error' => 'Email and password are required'
+            ], 400);
+        }
 
-        if (!isset($data['email'], $data['password'])) {
-            return $this->json(['error' => 'Invalid payload'], 400);
+        $existingUser = $em->getRepository(User::class)
+            ->findOneBy(['email' => $data['email']]);
+        
+        if ($existingUser) {
+            return $this->json([
+                'error' => 'User already exists'
+            ], 409);
         }
 
         $user = new User();
@@ -34,9 +48,8 @@ class RegisterController extends AbstractController
         $em->persist($user);
         $em->flush();
 
-        return $this->json(
-            ['message' => 'User registered successfully'],
-            201
-        );
+        return $this->json([
+            'message' => 'User registered successfully'
+        ], 201);
     }
 }
