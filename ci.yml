@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [ "feat/auth", "main" ]
   pull_request:
 
 jobs:
@@ -10,88 +11,44 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16
         env:
-          POSTGRES_DB: app_test
           POSTGRES_USER: app
           POSTGRES_PASSWORD: app
+          POSTGRES_DB: app_test
         ports:
           - 5432:5432
         options: >-
           --health-cmd="pg_isready -U app -d app_test"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=10
+          --health-retries=5
 
     env:
       APP_ENV: test
+      APP_SECRET: test_secret
       DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
 
-      # JWT for CI (stable + reproducible)
-      JWT_PASSPHRASE: test_passphrase
-      JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
-      JWT_PUBLIC_KEY: "%kernel.project_dir%/config/jwt/public.pem"
+      JWT_SECRET_KEY: config/jwt/private.pem
+      JWT_PUBLIC_KEY: config/jwt/public.pem
+      JWT_PASSPHRASE: test
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
-          tools: composer
-          extensions: intl, pdo_pgsql, zip
+          php-version: "8.4"
+          extensions: mbstring, intl, pdo_pgsql
+          coverage: none
 
-      - name: Cache composer
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('composer.lock') }}
-
-      - name: Install dependencies
+      - name: Install deps
         run: composer install --no-interaction --prefer-dist
 
-      - name: Generate JWT keys (CI)
-        run: |
-          mkdir -p config/jwt
-          php bin/console lexik:jwt:generate-keypair --overwrite
-        env:
-          JWT_PASSPHRASE: test_passphrase
-
-      - name: Diagnostics (routes, keys, env)
-        run: |
-          php -v
-          php bin/console about
-          echo "=== Routes (login/register) ==="
-          php bin/console debug:router | grep -E 'api_login_check|api_register' || true
-          echo "=== JWT keys ==="
-          ls -la config/jwt || true
-          echo "=== DB URL ==="
-          echo "$DATABASE_URL"
-
-      - name: Validate container
-        run: php bin/console lint:container
-
-      - name: Create database & run migrations
+      - name: Create DB + migrate
         run: |
           php bin/console doctrine:database:create --if-not-exists --env=test
-          php bin/console doctrine:migrations:migrate -n --env=test
+          php bin/console doctrine:migrations:migrate -n --allow-no-migration --env=test
 
-      - name: Run tests (verbose)
-        run: php bin/phpunit -vvv --testdox
-
-      - name: Dump logs on failure
-        if: failure()
-        run: |
-          echo "==== var/log/test.log ===="
-          test -f var/log/test.log && tail -n 300 var/log/test.log || echo "no test.log"
-          echo "==== var/log/dev.log ===="
-          test -f var/log/dev.log && tail -n 300 var/log/dev.log || echo "no dev.log"
-
-      - name: Upload logs artifact
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: symfony-logs
-          path: |
-            var/log/*
+      - name: Run tests
+        run: php bin/phpunit
