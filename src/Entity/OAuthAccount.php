@@ -23,4 +23,38 @@ class OAuthAccount
     private User $user;
 
     // getters/setters
+
+    public function setProvider(string $provider): self
+{
+    $this->provider = $provider;
+    return $this;
+}
+
+public function setProviderUserId(string $providerUserId): self
+{
+    $this->providerUserId = $providerUserId;
+    return $this;
+}
+
+public function setUser(User $user): self
+{
+    $this->user = $user;
+    return $this;
+}
+
+public function getUser(): ?User
+{
+    return $this->user;
+}
+
+public function getProvider(): ?string
+{
+    return $this->provider;
+}
+
+public function getProviderUserId(): ?string
+{
+    return $this->providerUserId;
+}
+
 }
