@@ -43,15 +43,18 @@ jobs:
           tools: composer
           extensions: intl, pdo_pgsql, zip
 
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+      - name: Install dependencies (no scripts)
+        run: composer install --no-interaction --prefer-dist --no-scripts
 
       - name: Generate JWT keys (CI)
         run: |
           mkdir -p config/jwt
           php bin/console lexik:jwt:generate-keypair --overwrite
 
-      # ✅ مهم: allow-no-migration باش ما يطيحش
+      # ✅ دير cache clear يدويًا فـ test
+      - name: Clear cache (test)
+        run: php bin/console cache:clear --env=test
+
       - name: Create database & run migrations
         run: |
           php bin/console doctrine:database:create --if-not-exists --env=test
