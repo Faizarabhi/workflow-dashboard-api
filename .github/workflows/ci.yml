@@ -26,9 +26,9 @@ jobs:
     env:
       APP_ENV: test
       APP_SECRET: test_secret
+      DEFAULT_URI: http://localhost
       DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
 
-      # Lexik JWT expects real file paths
       JWT_PASSPHRASE: test_passphrase
       JWT_SECRET_KEY: config/jwt/private.pem
       JWT_PUBLIC_KEY: config/jwt/public.pem
@@ -45,11 +45,12 @@ jobs:
 
       - name: Create .env (CI)
         run: |
-            cat > .env <<'EOF'
-            APP_ENV=test
-            APP_SECRET=test_secret
-            DATABASE_URL=postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
-            EOF
+          cat > .env <<'EOF'
+          APP_ENV=test
+          APP_SECRET=test_secret
+          DEFAULT_URI=http://localhost
+          DATABASE_URL=postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+          EOF
 
       - name: Install dependencies (no scripts)
         run: composer install --no-interaction --prefer-dist --no-scripts
