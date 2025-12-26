@@ -43,7 +43,14 @@ jobs:
           tools: composer
           extensions: intl, pdo_pgsql, zip
 
-      # ✅ مهم: بلا auto-scripts (كيحل exit 255)
+      - name: Create .env (CI)
+        run: |
+            cat > .env <<'EOF'
+            APP_ENV=test
+            APP_SECRET=test_secret
+            DATABASE_URL=postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+            EOF
+
       - name: Install dependencies (no scripts)
         run: composer install --no-interaction --prefer-dist --no-scripts
 
