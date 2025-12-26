@@ -31,7 +31,7 @@
 ###< lexik/jwt-authentication-bundle ###
 
 .env
-.env.test
-.env/*
-.env.local
 .env.dev
+.env.local
+.env.*.local
+
