@@ -43,6 +43,7 @@ jobs:
           tools: composer
           extensions: intl, pdo_pgsql, zip
 
+      # ✅ مهم: بلا auto-scripts (كيحل exit 255)
       - name: Install dependencies (no scripts)
         run: composer install --no-interaction --prefer-dist --no-scripts
 
@@ -51,7 +52,6 @@ jobs:
           mkdir -p config/jwt
           php bin/console lexik:jwt:generate-keypair --overwrite
 
-      # ✅ دير cache clear يدويًا فـ test
       - name: Clear cache (test)
         run: php bin/console cache:clear --env=test
 
